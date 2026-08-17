@@ -26,6 +26,9 @@
   `<funcionalidad>.service.ts`
   - `dto/` — DTOs específicos del contrato HTTP de esa funcionalidad:
     tanto de request (`CreateUserDto`) como de response (`ResponseLogin`).
+    Todo archivo acá termina en `.dto.ts`, sin importar si es de entrada o
+    de salida — el nombre de la clase/interfaz puede no llevar el sufijo
+    `Dto` (p. ej. `ResponseLogin`), pero el archivo sí (`response-login.dto.ts`).
   - mappers (`<entidad>.mapper.ts`) y value objects internos que nunca
     cruzan el límite HTTP tal cual (`payload-jwt.ts`) van sueltos en la
     raíz del módulo, no dentro de `dto/`.
