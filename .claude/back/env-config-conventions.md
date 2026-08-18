@@ -1,14 +1,14 @@
 # Convenciones de configuración de variables de entorno
 
-Patrón extraído de `src/common/config/` en los tres backends del
-ecosistema (`auth-api`, `ticket-hub-api`, `pcbox-api`) — `env.module.ts`
-y `env.validation.ts` son estructuralmente idénticos en los tres,
-variable por variable propia de cada app aparte. Aplica a cualquier
-backend nuevo que se agregue.
+Todo backend del ecosistema resuelve `src/common/config/` de la misma
+forma: `env.module.ts` y la estructura de `env.validation.ts` son
+siempre el mismo archivo, variable por variable propia de cada app
+aparte. Aplica también a cualquier backend nuevo que se agregue más
+adelante — copiar este patrón tal cual, no reinventarlo por proyecto.
 
 ## 1. `EnvModule` — wrapper global de `ConfigModule`
 
-Siempre el mismo archivo, sin variación entre apps:
+Siempre el mismo archivo, sin variación de una app a otra:
 
 ```ts
 import { Global, Module } from '@nestjs/common';
@@ -41,7 +41,7 @@ boilerplate puro, la explicación vive acá.
 
 ## 2. `env.validation.ts` — única fuente de verdad, todo obligatorio
 
-Misma forma en los tres backends:
+Misma forma en cualquier backend:
 
 ```ts
 import { plainToInstance } from 'class-transformer';
@@ -93,8 +93,8 @@ export function validate(
     niveles válidos de pino, en orden de severidad ascendente
     (`trace/debug/info/warn/error/fatal`).
 - `validate()` en sí (imports, cuerpo de la función, el mensaje de
-  error) es idéntico en los tres backends — no hace falta comentarlo de
-  nuevo en cada repo nuevo, esta es la referencia.
+  error) se copia tal cual en cada backend nuevo — no hace falta
+  comentarlo de nuevo en cada repo, esta es la referencia.
 
 ## 3. Comentarios solo donde el nombre de la variable no basta
 
