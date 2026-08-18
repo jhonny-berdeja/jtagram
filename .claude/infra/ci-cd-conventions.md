@@ -76,6 +76,52 @@ en una sola línea.
    `.github/scripts/` (con `.github/scripts/tests/` adentro). Los
    `run:` referencian el path completo: `.github/scripts/algo.sh`.
 
+## Todo pipeline arranca validando que sus secrets existan
+
+**Todo workflow de este ecosistema empieza con un job de validación, y lo
+primero que ese job valida es que cada `secrets.*` que el archivo usa —
+en cualquier job, no solo el primero — esté efectivamente cargado.** El
+objetivo es fallar rápido: enterarse de un secret faltante en los
+primeros segundos del run, no varios minutos adentro (un build de
+Docker ya corrido, un `kubectl apply` a mitad de camino).
+
+1. **Si el workflow ya tiene un primer job de validación** (ej.
+   `validate-tags`, que valida tags de git/Docker Hub antes de que
+   builden/dispare nada), el chequeo de secrets se agrega ahí, como sus
+   primeros steps — no se crea un job nuevo separado. Si ese job tenía
+   un nombre específico a lo que validaba antes (`validate-tags`), se
+   renombra a algo genérico (`validate`) una vez que valida más de una
+   cosa, y se actualiza el único lugar que lo referencia (`needs:` del
+   job siguiente).
+
+2. **Si el workflow no tiene ningún job de validación todavía** (ej. los
+   `deploy-*.yml` de `infra-hub`, hoy un solo job `deploy`), se agrega
+   un job `validate` nuevo, primero en el archivo, sin `needs:`, y el
+   job que antes era el único pasa a depender de él (`needs: validate`).
+
+3. **Un step por secret, alcanzando el valor solo por `env:`** (nunca
+   `${{ secrets.ALGO }}` inline en el `run:`), llamando a
+   `.github/scripts/assert-secret-is-set.sh <NOMBRE> "$NOMBRE"`:
+   ```yaml
+   - name: Assert the DOCKERHUB_TOKEN secret is set.
+     env:
+       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+     run: .github/scripts/assert-secret-is-set.sh DOCKERHUB_TOKEN "$DOCKERHUB_TOKEN"
+   ```
+   Steps en orden alfabético por nombre de secret, así el orden es
+   predecible y no depende de en qué job de más abajo se usa cada uno.
+
+4. **No es el patrón checker + assert de la sección siguiente.** Ese
+   patrón existe para chequeos que necesitan poder fallar en dos
+   direcciones (`exists` / `not-exists`). "El secret está seteado" solo
+   tiene una dirección posible — un único script (`assert-secret-is-set.sh`,
+   modelado sobre `validate-image-tag.sh`) alcanza, sin split
+   checker/assert.
+
+5. **Cada repo tiene su propia copia de `assert-secret-is-set.sh`** (y su
+   test en `scripts/tests/`) — no hay código compartido entre repos en
+   este ecosistema, cada uno es independiente.
+
 ## Separar "chequear" de "exigir": patrón checker + assert
 
 Cuando una validación tiene que poder fallar en las dos direcciones
