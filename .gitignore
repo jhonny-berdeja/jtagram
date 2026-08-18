@@ -1,6 +1,7 @@
 .atl/
 auth-api/
 iam/
+iam-api/
 infra-hub/
 pcbox-api/
 posts/
